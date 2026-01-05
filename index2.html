@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玄門命理 - 2026 姻緣大運</title>
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #d4af37;
+            --deep-red: #8e1b1b;
+            --paper: #f9f4e8;
+            --ink: #2c3e50;
+        }
+
+        body {
+            background-color: #1a1a1a; /* 背景深色凸顯紙質感 */
+            font-family: 'Noto Serif TC', serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            color: var(--ink);
+        }
+
+        .main-wrapper {
+            background: var(--paper);
+            max-width: 600px;
+            width: 100%;
+            min-height: 100vh;
+            padding: 30px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border-left: 5px solid var(--gold);
+            border-right: 5px solid var(--gold);
+        }
+
+        h1 {
+            font-family: 'Ma Shan Zheng', cursive;
+            text-align: center;
+            font-size: 3rem;
+            color: var(--deep-red);
+            margin: 10px 0;
+            letter-spacing: 5px;
+        }
+
+        .input-box {
+            background: rgba(212, 175, 55, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--gold);
+            margin-bottom: 30px;
+        }
+
+        .input-row { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: var(--deep-red);
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            border-radius: 5px;
+        }
+
+        button:hover { background: #5a1111; letter-spacing: 2px; }
+
+        /* 結果區塊 */
+        .result-section { display: none; border-top: 2px solid var(--gold); margin-top: 20px; padding-top: 20px; }
+
+        .bazi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .pillar {
+            background: white;
+            padding: 10px;
+            border: 1px solid var(--gold);
+        }
+
+        .pillar-title { font-size: 0.8rem; color: #777; margin-bottom: 5px; }
+        .pillar-chars { font-size: 1.8rem; font-weight: bold; color: var(--deep-red); }
+
+        .report-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--deep-red);
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .report-card h3 { margin-top: 0; color: var(--deep-red); border-bottom: 1px solid #eee; padding-bottom: 5px; }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            background: var(--gold);
+            color: white;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper">
+    <h1>命理姻緣閣</h1>
+    <p style="text-align: center; font-style: italic;">「天命有定，緣分在心」</p>
+
+    <div class="input-box">
+        <div class="input-row">
+            <label>姓名</label>
+            <input type="text" id="name" placeholder="請輸入您的姓名">
+        </div>
+        <div class="input-row">
+            <label>出生時辰</label>
+            <input type="datetime-local" id="birthday">
+        </div>
+        <div class="input-row">
+            <label>性別</label>
+            <select id="gender">
+                <option value="female">女命 (坤造)</option>
+                <option value="male">男命 (乾造)</option>
+            </select>
+        </div>
+        <button onclick="calculate()">啟動天機</button>
+    </div>
+
+    <div id="result" class="result-section">
+        <div class="bazi-grid" id="bazi-display">
+            </div>
+
+        <div class="report-card">
+            <span class="tag">姻緣宮位</span>
+            <h3 id="marry-title">配偶特質解析</h3>
+            <p id="marry-desc"></p>
+        </div>
+
+        <div class="report-card" style="border-color: #c0392b;">
+            <span class="tag" style="background:#c0392b;">2026 流年預測</span>
+            <h3>丙午年姻緣大運</h3>
+            <p id="year-desc"></p>
+        </div>
+
+        <div class="report-card" style="border-color: #27ae60;">
+            <span class="tag" style="background:#27ae60;">開運指引</span>
+            <h3>月老給您的建議</h3>
+            <p id="lucky-desc"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculate() {
+        const name = document.getElementById('name').value || "求測者";
+        const bday = document.getElementById('birthday').value;
+        const gender = document.getElementById('gender').value;
+
+        if (!bday) return alert("請輸入正確的出生日期");
+
+        // 轉換曆法
+        const solar = Solar.fromDate(new Date(bday));
+        const lunar = solar.getLunar();
+        const baZi = lunar.getEightChar();
+        const p = [baZi.getYear(), baZi.getMonth(), baZi.getDay(), baZi.getTime()];
+
+        // 顯示八字
+        const titles = ['年柱', '月柱', '日柱', '時柱'];
+        let baziHtml = '';
+        p.forEach((val, i) => {
+            baziHtml += `
+                <div class="pillar">
+                    <div class="pillar-title">${titles[i]}</div>
+                    <div class="pillar-chars">${val[0]}<br>${val[1]}</div>
+                </div>`;
+        });
+        document.getElementById('bazi-display').innerHTML = baziHtml;
+
+        // 姻緣解析邏輯
+        const spouseBranch = p[2][1]; // 日支 (夫妻宮)
+        const dayMaster = p[2][0];    // 日主 (自己)
+
+        const spouseData = {
+            '子': '配偶才華橫溢，長相清秀，性格多變但極具魅力。',
+            '丑': '配偶為人誠實，做事踏實，雖然不夠浪漫但非常可靠。',
+            '寅': '配偶正直大方，極具領導氣質，能為你擋風遮雨。',
+            '卯': '配偶性格溫順，有藝術氣息，身材修長且非常有禮。',
+            '辰': '配偶才華出眾，志向遠大，內心世界豐富，有主見。',
+            '巳': '配偶性格活潑，社交力強，反應靈敏，是你的開心果。',
+            '午': '配偶陽光帥氣/漂亮，個性直爽，兩人相處如火如荼。',
+            '未': '配偶耐心極好，包容力強，家庭觀念非常重。',
+            '申': '配偶聰明果斷，口才極佳，經常帶給你意想不到的驚喜。',
+            '酉': '配偶愛美、講究細節，自尊心強，具備出色的審美感。',
+            '戌': '配偶忠誠度極高，守規矩，是最好的避風港。',
+            '亥': '配偶性格隨和，很有福氣，能帶動你的家庭運勢。'
+        };
+
+        // 2026 丙午年預測 (根據日主簡化邏輯)
+        let yearText = "";
+        const fireDays = ['丙', '丁'];
+        const waterDays = ['壬', '癸'];
+        const metalDays = ['庚', '辛'];
+
+        if (waterDays.includes(dayMaster)) {
+            yearText = "2026丙午年對您而言是『財官兩旺』。這一年紅鸞星動，極易遇到讓你心跳加速的對象，且多為各方面條件都非常優秀的『正緣』。";
+        } else if (metalDays.includes(dayMaster)) {
+            yearText = "2026年是您的官殺運。對女命而言，桃花非常強烈，但要小心挑選，避免陷入糾纏的感情關係；男命則事業會帶動姻緣。";
+        } else if (fireDays.includes(dayMaster)) {
+            yearText = "流年與您日主同氣。這一年感情上競爭較大，容易遇到心儀對象被他人捷足先登，建議果斷出擊。";
+        } else {
+            yearText = "2026年火氣旺盛。感情上熱度提升，單身者有機會在遠行或聚會中結實新對象，戀愛中的人適合在今年訂婚。";
+        }
+
+        document.getElementById('marry-desc').innerText = spouseData[spouseBranch];
+        document.getElementById('year-desc').innerText = yearText;
+        document.getElementById('lucky-desc').innerText = "2026年您的桃花位在南方。建議多穿紅色或粉色系服裝。農曆五月（午月）是您今年最強的姻緣窗口，請務必把握！";
+
+        document.getElementById('result').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
